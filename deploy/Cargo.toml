@@ -1,0 +1,14 @@
+[package]
+name = "deploy"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+aptos-sdk = { git = "https://github.com/aptos-labs/aptos-core", branch = "mainnet" }
+aptos-framework = { git = "https://github.com/aptos-labs/aptos-core", branch = "mainnet" }
+aptos-cached-packages = { git = "https://github.com/aptos-labs/aptos-core", branch = "mainnet" }
+hex = "0.4.3"
+url = "2.3.1"
+anyhow = "1.0"
+tokio = { version = "1", features = ["full"] }
+
