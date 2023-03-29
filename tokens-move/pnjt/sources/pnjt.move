@@ -1,4 +1,4 @@
-module punkninja::ppt {
+module punkninja::pnjt {
     use std::string;
     use std::signer::{address_of};
     use std::error;
@@ -13,6 +13,7 @@ module punkninja::ppt {
     const EALREAY_ADDED: u64 = 3;
     const ENOT_EXIST: u64 = 4;
     const EREMOVE_SELF: u64 = 5;
+    const EALREAY_REGISTERED: u64 = 6;
 
     const ROLE_ADMIN:  u8 = 1;
     const ROLE_BURNER: u8 = 2;
@@ -114,14 +115,14 @@ module punkninja::ppt {
         coin::deposit(to, c);
     }
 
-    struct PunkNinjaCoin {}
+    struct PunkNinjaToyToken {}
     fun init_module(resource_signer: &signer) {
         // retrieve the signer capability
         let signer_cap = resource_account::retrieve_resource_account_cap(resource_signer, @deployer);
-        let (burn_cap, freeze_cap, mint_cap) = coin::initialize<PunkNinjaCoin>(
+        let (burn_cap, freeze_cap, mint_cap) = coin::initialize<PunkNinjaToyToken>(
             resource_signer,
             string::utf8(b"Punk Ninja Power Token"),
-            string::utf8(b"PPT"),
+            string::utf8(b"PNJT"),
             8,
             true,
         );
@@ -141,13 +142,19 @@ module punkninja::ppt {
         table::add(&mut roles, ROLE_BURNER, burners);
         table::add(&mut roles, ROLE_WITHRAWER, withdrawers);
 
-        move_to(resource_signer, CoinCapabilities<PunkNinjaCoin> {
+        move_to(resource_signer, CoinCapabilities<PunkNinjaToyToken> {
             roles,
             signer_cap,
             burn_cap,
             freeze_cap,
             mint_cap,
         });
-        aptos_framework::coin::register<PunkNinjaCoin>(resource_signer);
+        aptos_framework::coin::register<PunkNinjaToyToken>(resource_signer);
+    }
+
+    public entry fun prepare_account_script(owner: &signer) {
+        let account_addr = signer::address_of(owner);
+        assert!(!aptos_framework::coin::is_account_registered<PunkNinjaToyToken>(account_addr), error::permission_denied(EALREAY_REGISTERED));
+        aptos_framework::managed_coin::register<PunkNinjaToyToken>(owner);
     }
 }

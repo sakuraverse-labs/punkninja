@@ -11,7 +11,7 @@ More detailed guide [here](https://imcoding.online/tutorials/how-to-implement-mi
 ```shell
 $ cd deploy
 $ export DEPLOYER_ADDRESS=3272452b1da356896514aecb4e9d9625b207c10b3affe04845f9763e838c7c6c
-$ export DEPLOYER_PRIVATE_KEY=001140ddc92b95eed0655a73fde1f0141225329cc0212826d7ea056148b2a6e8
+$ export DEPLOYER_PRIVATE_KEY=...
 $ export APTOS_NODE_URL=http://127.0.0.1:8080
 $ cargo run
 ```
