@@ -1,6 +1,6 @@
 module punkninja::ppt {
     use std::string;
-    use std::signer::{address_of};
+    use std::signer::{Self, address_of};
     use std::error;
     use std::vector;
     use aptos_framework::account;

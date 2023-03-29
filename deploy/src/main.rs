@@ -13,10 +13,12 @@ use anyhow::{Context, Result};
 use std::time::{SystemTime, UNIX_EPOCH};
 use std::env;
 
-const APTOS_NODE_URL: &str = "https://fullnode.testnet.aptoslabs.com";
-
 #[tokio::main]
 async fn main()  -> Result<()> {
+    let args: Vec<String> = env::args().collect();
+    let module = &args[1];
+    let seed = &args[2];
+    println!("deploy module: {:?}", module);
     // setup local account
     let key_bytes = hex::decode(env::var("DEPLOYER_PRIVATE_KEY").unwrap().trim_start_matches("0x")).unwrap();
     let private_key: Ed25519PrivateKey = (&key_bytes[..]).try_into().unwrap();
@@ -24,7 +26,7 @@ async fn main()  -> Result<()> {
     let address: AccountAddress = env::var("DEPLOYER_ADDRESS").unwrap().parse().unwrap();
 
     // setup rest client using rpc node url
-    let base_url = env::var("APTOS_NODE_URL").unwrap_or(String::from(APTOS_NODE_URL));
+    let base_url = env::var("APTOS_NODE_URL").unwrap_or(String::from(""));
     let rest_url = Url::parse(&base_url).expect("url must valid");
     let client = rest_client::Client::new(rest_url).clone();
 
@@ -33,9 +35,9 @@ async fn main()  -> Result<()> {
 
     let mut account = LocalAccount::new(address.into(), private_key, account_info.sequence_number);
 
-    let seed:Vec<u8> = vec![0u8, 0u8, 0u8, 4u8];
-    let resource_address = create_resource_address(account.address(), &seed);
+    let resource_address = create_resource_address(account.address(), &seed.as_bytes());
     println!("resource account: {:?}", resource_address.to_string());
+    println!("resource seed: {:?}", seed);
 
     // build move package
     let mut build_options = BuildOptions::default();
@@ -43,7 +45,7 @@ async fn main()  -> Result<()> {
     build_options.named_addresses.insert("deployer".to_string(), address);
 
     let package = BuiltPackage::build(
-        PathBuf::from(format!("../tokens-move/pnjt")),
+        PathBuf::from(format!("../tokens-move/{}", module)),
         build_options,
     ).expect("building package must succeed");
 
