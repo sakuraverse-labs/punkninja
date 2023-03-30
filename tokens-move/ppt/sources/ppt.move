@@ -115,11 +115,11 @@ module punkninja::ppt {
         coin::deposit(to, c);
     }
 
-    struct PunkNinjaCoin {}
+    struct PunkPowerToken {}
     fun init_module(resource_signer: &signer) {
         // retrieve the signer capability
         let signer_cap = resource_account::retrieve_resource_account_cap(resource_signer, @deployer);
-        let (burn_cap, freeze_cap, mint_cap) = coin::initialize<PunkNinjaCoin>(
+        let (burn_cap, freeze_cap, mint_cap) = coin::initialize<PunkPowerToken>(
             resource_signer,
             string::utf8(b"Punk Ninja Power Token"),
             string::utf8(b"PPT"),
@@ -142,20 +142,20 @@ module punkninja::ppt {
         table::add(&mut roles, ROLE_BURNER, burners);
         table::add(&mut roles, ROLE_WITHRAWER, withdrawers);
 
-        move_to(resource_signer, CoinCapabilities<PunkNinjaCoin> {
+        move_to(resource_signer, CoinCapabilities<PunkPowerToken> {
             roles,
             signer_cap,
             burn_cap,
             freeze_cap,
             mint_cap,
         });
-        aptos_framework::coin::register<PunkNinjaCoin>(resource_signer);
+        aptos_framework::coin::register<PunkPowerToken>(resource_signer);
         
     }
 
     public entry fun prepare_account_script(owner: &signer) {
         let account_addr = signer::address_of(owner);
-        assert!(!aptos_framework::coin::is_account_registered<PunkNinjaCoin>(account_addr), error::permission_denied(EALREAY_REGISTERED));
-        aptos_framework::managed_coin::register<PunkNinjaCoin>(owner);
+        assert!(!aptos_framework::coin::is_account_registered<PunkPowerToken>(account_addr), error::permission_denied(EALREAY_REGISTERED));
+        aptos_framework::managed_coin::register<PunkPowerToken>(owner);
     }
 }
