@@ -121,7 +121,7 @@ module punkninja::pnjt {
         let signer_cap = resource_account::retrieve_resource_account_cap(resource_signer, @deployer);
         let (burn_cap, freeze_cap, mint_cap) = coin::initialize<PunkNinjaToyToken>(
             resource_signer,
-            string::utf8(b"Punk Ninja Power Token"),
+            string::utf8(b"Punk Ninja Toy Token"),
             string::utf8(b"PNJT"),
             8,
             true,
