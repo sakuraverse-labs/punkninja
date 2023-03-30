@@ -1,0 +1,39 @@
+{
+  "scripts": {
+    "build-dev": "webpack --config webpack.dev.js",
+    "build": "webpack --config webpack.prod.js",
+    "serve": "webpack serve --config webpack.prod.js"
+  },
+  "private": true,
+  "devDependencies": {
+    "@types/react-dom": "^18.0.11",
+    "node-polyfill-webpack-plugin": "^2.0.1",
+    "terser-webpack-plugin": "^5.3.7",
+    "ts-loader": "^9.4.2",
+    "typescript": "^4.9.5",
+    "url": "^0.11.0",
+    "url-parse": "^1.5.10",
+    "webpack": "^5.76.3",
+    "webpack-cli": "^5.0.1",
+    "webpack-dev-server": "^4.13.1",
+    "webpack-merge": "^5.8.0"
+  },
+  "dependencies": {
+    "@aptos-labs/wallet-adapter-mui-design": "^0.1.1",
+    "@aptos-labs/wallet-adapter-react": "^0.2.4",
+    "@emotion/react": "^11.10.6",
+    "@emotion/styled": "^11.10.6",
+    "@martianwallet/aptos-wallet-adapter": "^0.0.3",
+    "@mui/lab": "^5.0.0-alpha.124",
+    "@mui/material": "^5.11.14",
+    "@pontem/wallet-adapter-plugin": "^0.1.4",
+    "antd": "^5.1.2",
+    "aptos": "^1.7.2",
+    "fewcha-plugin-wallet-adapter": "^0.1.2",
+    "framer-motion": "^10.9.1",
+    "petra-plugin-wallet-adapter": "^0.1.2",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-number-format": "^5.1.4"
+  }
+}
