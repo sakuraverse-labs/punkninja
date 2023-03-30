@@ -134,7 +134,7 @@ module punkninja::nft {
         token::mint_token_to(&resource_signer, receiver, tokendata_id, 1);
     }
 
-    public entry fun mint_offer_token_script(
+    public entry fun cancel_offer_token_script(
         caller: &signer,
         receiver: address,
         name: String,
@@ -168,5 +168,21 @@ module punkninja::nft {
         token::mint_token(&resource_signer, tokendata_id, 1);
         let token_id = token::create_token_id_raw(@punkninja, data.collection, name, 0);
         token_transfers::offer(&resource_signer, receiver, token_id, 1);
+    }
+
+    public entry fun cancel_offer_script(
+        caller: &signer,
+        receiver: address,
+        name: String,
+        property_version: u64
+    ) acquires NFTRolesData {
+        // caller must be minter
+        let caller_addr = address_of(caller);
+        let data = borrow_global<NFTRolesData>(@punkninja);
+        let minters = table::borrow(&data.roles, ROLE_MINTER);
+        assert!(vector::contains(minters, &caller_addr), error::permission_denied(ENOT_AUTHORIZED));
+        let resource_signer = account::create_signer_with_capability(&data.signer_cap);
+        let token_id = token::create_token_id_raw(@punkninja, data.collection, name, property_version);
+        token_transfers::cancel_offer(&resource_signer, receiver, token_id);
     }
 }
