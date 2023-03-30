@@ -55,7 +55,7 @@ async fn main()  -> Result<()> {
     
     // deploy resource account and publish package
     let payload = aptos_stdlib::resource_account_create_resource_account_and_publish_package(
-        seed, 
+        seed.as_bytes().to_vec(), 
         bcs::to_bytes(&metadata).expect("package metadata has BCS"), 
         code,
     );
