@@ -20,6 +20,8 @@ module punkninja::pnjt {
     const ROLE_MINTER: u8 = 3;
     const ROLE_WITHRAWER: u8 = 4;
 
+    struct PunkNinjaToyToken {}
+
     struct CoinCapabilities<phantom CoinType> has key {
         roles: Table<u8, vector<address>>,
         signer_cap: account::SignerCapability,
@@ -28,9 +30,9 @@ module punkninja::pnjt {
         freeze_cap: coin::FreezeCapability<CoinType>,
     }
 
-    public entry fun add_role<CoinType>(caller: &signer, role_id: u8 , member: address) acquires CoinCapabilities {
+    public entry fun add_role(caller: &signer, role_id: u8 , member: address) acquires CoinCapabilities {
         let caller_addr = address_of(caller);
-        let roles = &mut borrow_global_mut<CoinCapabilities<CoinType>>(@punkninja).roles;
+        let roles = &mut borrow_global_mut<CoinCapabilities<PunkNinjaToyToken>>(@punkninja).roles;
 
         // role id must exsit
         assert!(table::contains(roles, role_id), error::permission_denied(EINVALID_ROLE_ID));
@@ -46,9 +48,9 @@ module punkninja::pnjt {
         vector::push_back(role, member);
     }
 
-    public entry fun remove_role<CoinType>(caller: &signer, role_id: u8 , member: address) acquires CoinCapabilities {
+    public entry fun remove_role(caller: &signer, role_id: u8 , member: address) acquires CoinCapabilities {
         let caller_addr = address_of(caller);
-        let roles = &mut borrow_global_mut<CoinCapabilities<CoinType>>(@punkninja).roles;
+        let roles = &mut borrow_global_mut<CoinCapabilities<PunkNinjaToyToken>>(@punkninja).roles;
         
         // can not remove self
         assert!(caller_addr != member, error::permission_denied(EREMOVE_SELF));
@@ -67,34 +69,34 @@ module punkninja::pnjt {
         vector::remove(role, index);
     }
 
-    /// Create new coins `CoinType` and deposit them into dst_addr's account.
-    public entry fun mint<CoinType>(
+    /// Create new coins `PunkNinjaToyToken` and deposit them into dst_addr's account.
+    public entry fun mint(
         caller: &signer,
         dst_addr: address,
         amount: u64,
     ) acquires CoinCapabilities {
         // caller must be minter
         let caller_addr = address_of(caller);
-        let capabilities = borrow_global<CoinCapabilities<CoinType>>(@punkninja);
+        let capabilities = borrow_global<CoinCapabilities<PunkNinjaToyToken>>(@punkninja);
         let minters = table::borrow(&capabilities.roles, ROLE_MINTER);
         assert!(vector::contains(minters, &caller_addr), error::permission_denied(ENOT_AUTHORIZED));
         let coins_minted = coin::mint(amount, &capabilities.mint_cap);
         coin::deposit(dst_addr, coins_minted);
     }
 
-    /// Withdraw an `amount` of coin `CoinType` from `account` and burn it.
-    public entry fun burn<CoinType>(
+    /// Withdraw an `amount` of coin `PunkNinjaToyToken` from `account` and burn it.
+    public entry fun burn(
         caller: &signer,
         amount: u64,
     ) acquires CoinCapabilities {
         // caller must be burner
         let caller_addr = address_of(caller);
-        let capabilities = borrow_global<CoinCapabilities<CoinType>>(@punkninja);
+        let capabilities = borrow_global<CoinCapabilities<PunkNinjaToyToken>>(@punkninja);
         let burners = table::borrow(&capabilities.roles, ROLE_BURNER);
         assert!(vector::contains(burners, &caller_addr), error::permission_denied(ENOT_AUTHORIZED));
 
         let from = account::create_signer_with_capability(&capabilities.signer_cap);
-        let to_burn = coin::withdraw<CoinType>(&from, amount);
+        let to_burn = coin::withdraw<PunkNinjaToyToken>(&from, amount);
         coin::burn(to_burn, &capabilities.burn_cap);
     }
 
@@ -106,7 +108,7 @@ module punkninja::pnjt {
     ) acquires CoinCapabilities {
         // caller must be burner
         let caller_addr = address_of(caller);
-        let capabilities = borrow_global<CoinCapabilities<CoinType>>(@punkninja);
+        let capabilities = borrow_global<CoinCapabilities<PunkNinjaToyToken>>(@punkninja);
         let withdrawer = table::borrow(&capabilities.roles, ROLE_WITHRAWER);
         assert!(vector::contains(withdrawer, &caller_addr), error::permission_denied(ENOT_AUTHORIZED));
 
@@ -115,7 +117,6 @@ module punkninja::pnjt {
         coin::deposit(to, c);
     }
 
-    struct PunkNinjaToyToken {}
     fun init_module(resource_signer: &signer) {
         // retrieve the signer capability
         let signer_cap = resource_account::retrieve_resource_account_cap(resource_signer, @deployer);
