@@ -134,7 +134,7 @@ module punkninja::nft {
         token::mint_token_to(&resource_signer, receiver, tokendata_id, 1);
     }
 
-    public entry fun cancel_offer_token_script(
+    public entry fun mint_offer_token_script(
         caller: &signer,
         receiver: address,
         name: String,
@@ -146,7 +146,6 @@ module punkninja::nft {
         let data = borrow_global<NFTRolesData>(@punkninja);
         let minters = table::borrow(&data.roles, ROLE_MINTER);
         assert!(vector::contains(minters, &caller_addr), error::permission_denied(ENOT_AUTHORIZED));
-
 
         let resource_signer = account::create_signer_with_capability(&data.signer_cap);
         let token_mut_config = token::create_token_mutability_config(&vector<bool>[false,false,false,false,false]);
