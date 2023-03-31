@@ -8,11 +8,19 @@ import { MartianWallet } from "@martianwallet/aptos-wallet-adapter";
 import { PetraWallet } from "petra-plugin-wallet-adapter";
 import { PontemWallet } from "@pontem/wallet-adapter-plugin";
 import { useWallet } from "@aptos-labs/wallet-adapter-react";
-import { AccordionDetails, Typography, AccordionSummary, Accordion, FormControl, InputLabel, Select, MenuItem, SelectChangeEvent, TextField, Stack } from '@mui/material';
+import { Box, AccordionDetails, Typography, AccordionSummary, Accordion, FormControl, InputLabel, Select, MenuItem, SelectChangeEvent, TextField, Stack } from '@mui/material';
 import {Send, ExpandMore} from '@mui/icons-material';
 import LoadingButton from '@mui/lab/LoadingButton';
 import {HexString} from 'aptos'
 import {NumericFormat} from 'react-number-format';
+
+import { createTheme, ThemeProvider} from '@mui/material/styles';
+
+const theme = createTheme({
+    palette: {
+      mode: 'dark',
+    },
+});
 
 const NFT_DESCRIPTION = "PunkNinja is the first Web3 casual game platform of SakuraVerse. First 1000 limited PunkNinja will be launched, with 76% Normal,21% SR qualities, and 15% SSR qualities. With the NFT you can enjoy all the casual games on PunkNinja platform. Linktree :https://linktr.ee/sakuraverse"; 
 const NFT_NAME = "PunkNinja"; 
@@ -236,9 +244,19 @@ function Deployer() {
     }
 
     return (
-    <Stack spacing={2}>
-        <WalletConnector />
-        <TextField id="network-name" label="Network" variant="standard" disabled={true} value={network.name}/>
+    <Box sx={{
+        bgcolor: 'background.default',
+        color: 'text.primary',
+        borderRadius: 6,
+      }}>
+        <Stack>
+            <FormControl fullWidth>
+                <WalletConnector />
+            </FormControl>
+            <FormControl fullWidth>
+                <TextField id="network-name" label="Network" variant="standard" disabled={true} value={network.name}/>
+            </FormControl>
+        </Stack>
         <Accordion>
             <AccordionSummary
             expandIcon={<ExpandMore />}
@@ -428,16 +446,18 @@ function Deployer() {
            deployLog.map((log, i) => showLog(log))
         }
         </Stack>
-    </Stack>
+    </Box>
     )
 }
 function App() {
     const wallets = [new PetraWallet(), new MartianWallet(), new FewchaWallet(), new PontemWallet()];
     return (
         <StrictMode>
-            <AptosWalletAdapterProvider plugins={wallets} autoConnect={true}>
-                <Deployer />
-            </AptosWalletAdapterProvider>
+            <ThemeProvider theme={theme}>
+                <AptosWalletAdapterProvider plugins={wallets} autoConnect={true}>
+                    <Deployer />
+                </AptosWalletAdapterProvider>
+            </ThemeProvider>
         </StrictMode>
     )
 }
