@@ -245,7 +245,7 @@ function Deployer() {
             aria-controls="deploy-content"
             id="deploy-header"
             >
-            <Typography>Deplay Contract</Typography>
+            <Typography>Deploy Contract</Typography>
             </AccordionSummary>
             <AccordionDetails>
                 <Stack spacing={2}>
