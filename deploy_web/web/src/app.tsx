@@ -18,18 +18,11 @@ const NFT_DESCRIPTION = "PunkNinja is the first Web3 casual game platform of Sak
 const NFT_NAME = "PunkNinja"; 
 const NFT_BASE_URI = "https://nft.punkninja.com/aptos/nft/"
 
-const MODULES : {[key: string]: {[key: string]: string} } = {
-    "Testnet": {
-        "pnjt": "0xd84df0125baf77d07a4797086af1c83c7c68bebd2dafe9d01ff56b2bcd36ee70",
-        "nft": "0x630888cd8af9c784549e7f04af68ee5ad5bfc6fdeb79cf1811f4389ab9a17aa2",
-        "ppt": "0xae0930da2d89a88db1a7b29c31f7aa4c7aa4573559264b96237cacc4b7b4e2d7"
-    },
-    "Mainnet": {
-        "pnjt": "0xd84df0125baf77d07a4797086af1c83c7c68bebd2dafe9d01ff56b2bcd36ee70",
-        "nft": "0x630888cd8af9c784549e7f04af68ee5ad5bfc6fdeb79cf1811f4389ab9a17aa2",
-        "ppt": "0xae0930da2d89a88db1a7b29c31f7aa4c7aa4573559264b96237cacc4b7b4e2d7"
-    },
-};
+const showLog = (item: any)  => {
+    return(
+        <Typography>{item}</Typography>
+    );
+}
 
 function Deployer() {
     const {
@@ -39,24 +32,22 @@ function Deployer() {
         signAndSubmitTransaction,
     } = useWallet();
 
-    const network_name = network && network.name ? network.name : "Testnet";
-
     const [module, setModule] = useState("nft");
     const [seed, setSeed] = useState("1001");
     const [loading, setLoading] = useState(false);
-    
+    const [deployLog, setDeployLog] = useState([]);
 
     const [mintReceiver, setMintReceiver] = useState("");
     const [mintAmount, setMintAmount] = useState("0");
     const [mintLoading, setMintLoading] = useState(false);
     const [mintType, setMintType] = useState("nft");
-    const [mintModule, setMintModule] = useState(MODULES[network_name]["nft"]);
+    const [mintModule, setMintModule] = useState("");
     const [minter, setMinter] = useState("");
     const [registerType, setRegisterType] = useState("pnjt");
-    const [registerModule, setRegisterModule] = useState(MODULES[network_name]["pnjt"]);
+    const [registerModule, setRegisterModule] = useState("");
     const [registerLoading, setRegisterLoading] = useState(false);
     const [minterType, setMinterType] = useState("nft");
-    const [minterModule, setMinterModule] = useState(MODULES[network_name]["nft"]);
+    const [minterModule, setMinterModule] = useState("");
     const [minterLoading, setMinterLoading] = useState(false);
 
     const handleModuleChange = (event: SelectChangeEvent) => {
@@ -77,21 +68,33 @@ function Deployer() {
     };
     const handleMintTypeChange = (event: SelectChangeEvent) => {
         setMintType(event.target.value as string);
-        setMintModule(MODULES[network.name][event.target.value as string]);
     };
 
     const handleRegisterTypeChange = (event: SelectChangeEvent) => {
         setRegisterType(event.target.value as string);
-        setRegisterModule(MODULES[network.name][event.target.value as string]);
     };
 
     const handleMinterTypeChange = (event: SelectChangeEvent) => {
         setMinterType(event.target.value as string);
-        setMinterModule(MODULES[network.name][event.target.value as string]);
+    };
+
+    const handleMintModuleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setMintModule(event.target.value as string);
+    };
+
+    const handleRegisterModuleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setRegisterModule(event.target.value as string);
+    };
+
+    const handleMinterModuleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setMinterModule(event.target.value as string);
     };
 
     const handleDeploy = async () => {
         setLoading(true);
+        let logs = deployLog;
+        logs = [...logs, "Start compile contract code of " + module];
+        setDeployLog(logs);
         const jsonData = {
             "module": module,
             "wallet": account.address,
@@ -103,13 +106,14 @@ function Deployer() {
             headers: { "Content-Type": "application/json"},
             body: JSON.stringify(jsonData) 
         });
-
         const data = await response.json();
+        logs = [...logs, "Start deploy contract and create resource account [" + data["arguments"][3] + "]"];
+        setDeployLog(logs);
         const payload = {
             "arguments": [
                 new HexString(data["arguments"][0]).toUint8Array(),
                 new HexString(data["arguments"][1]).toUint8Array(),
-                data["arguments"][2].map((e: string) => new HexString(e).toUint8Array()),
+                data["arguments"][2].map((e: string) => Array.from(new HexString(e).toUint8Array())),
             ],
             "function": data["function"],
             "type": data["type"],
@@ -117,15 +121,19 @@ function Deployer() {
         }
         try{
             const result = await signAndSubmitTransaction(payload);
-            console.log(result);
+            logs = [...logs, "Deploy success: " + result.hash];
+            setDeployLog(logs);
         }catch(err) {
-            console.log(err);
+            logs = [...logs, "Deploy failed"];
+            setDeployLog(logs);
         }
         setLoading(false);
     };
 
     const handleMint = async () => {
         setMintLoading(true);
+        let logs = [...deployLog, "Mint " + mintType + " " + mintAmount + "to [" + mintReceiver +"]"];
+        setDeployLog(logs);
         const payload = mintType == "nft"? {
             arguments: [
                 mintReceiver,
@@ -147,15 +155,19 @@ function Deployer() {
         };
         try{
             const result = await signAndSubmitTransaction(payload);
-            console.log(result);
+            logs = [...logs, "Mint success: " + result.hash];
+            setDeployLog(logs);
         }catch(err) {
-            console.log(err);
+            logs = [...logs, "Mint failed"];
+            setDeployLog(logs);
         }
         setMintLoading(false);
     }
 
     const handleRegister = async () => {
         setRegisterLoading(true);
+        let logs = [...deployLog, "Register coin resource to account [" + account.address +"]"];
+        setDeployLog(logs);
         const payload = {
             arguments: [] as string[],
             function: registerModule + "::" + registerType + "::prepare_account_script",
@@ -164,15 +176,19 @@ function Deployer() {
         };
         try{
             const result = await signAndSubmitTransaction(payload);
-            console.log(result);
+            logs = [...logs, "Register success:" + result.hash];
+            setDeployLog(logs);
         }catch(err) {
-            console.log(err);
+            logs = [...logs, "Register failed"];
+            setDeployLog(logs);
         }
         setRegisterLoading(false);
     }
 
     const handleAddMinter = async () => {
         setMinterLoading(true);
+        let logs = [...deployLog, "Authorize minter role to account [" + minter +"]"];
+        setDeployLog(logs);
         const payload = {
             arguments: [3 , minter],
             function: minterModule + "::" + minterType + "::add_role",
@@ -181,15 +197,19 @@ function Deployer() {
         };
         try{
             const result = await signAndSubmitTransaction(payload);
-            console.log(result);
+            logs = [...logs, "Authorize success:" + result.hash];
+            setDeployLog(logs);
         }catch(err) {
-            console.log(err);
+            logs = [...logs, "Authorize failed"];
+            setDeployLog(logs);
         }
         setMinterLoading(false);
     }
 
     const handleRemoveMinter = async () => {
         setMinterLoading(true);
+        let logs = [...deployLog, "Revoke minter role of account[" + minter +"]"];
+        setDeployLog(logs);
         const payload = {
             arguments: [3, minter],
             function: minterModule + "::" + minterType + "::remove_role",
@@ -198,42 +218,44 @@ function Deployer() {
         };
         try{
             const result = await signAndSubmitTransaction(payload);
-            console.log(result);
+            logs = [...logs, "Revoke success:" + result.hash];
+            setDeployLog(logs);
         }catch(err) {
-            console.log(err);
+            logs = [...logs, "Revoke failed"];
+            setDeployLog(logs);
         }
+        
         setMinterLoading(false);
     }
 
     if(!connected) {
-        return (<WalletConnector />);
+        return (<Stack spacing={2}><WalletConnector /></Stack>);
     }
     if(!network.name) {
-        return (<WalletConnector />);
+        return (<Stack spacing={2}><WalletConnector /></Stack>);
     }
 
     return (
     <Stack spacing={2}>
         <WalletConnector />
-        <TextField id="network-name" label="网络名称" variant="standard" disabled={true} value={network.name}/>
-        <TextField id="network-chainid" label="网络ID" variant="standard" disabled={true} value={network.chainId}/>
+        <TextField id="network-name" label="Network" variant="standard" disabled={true} value={network.name}/>
         <Accordion>
             <AccordionSummary
             expandIcon={<ExpandMore />}
             aria-controls="deploy-content"
             id="deploy-header"
             >
-            <Typography>部署合约</Typography>
+            <Typography>Deplay Contract</Typography>
             </AccordionSummary>
             <AccordionDetails>
                 <Stack spacing={2}>
-                    <InputLabel id="module-select-label">合约类型</InputLabel>
                     <FormControl fullWidth>
+                        <InputLabel id="module-select-label">Contract Type</InputLabel>
                         <Select
                             labelId="module-select-label"
                             id="module-select"
                             value={module}
-                            label="合约类型"
+                            label="Contract Type"
                             onChange={handleModuleChange}
                         >
                             <MenuItem value={"nft"}>nft</MenuItem>
@@ -242,7 +264,7 @@ function Deployer() {
                         </Select>
                     </FormControl>
                     <FormControl fullWidth>
-                        <TextField id="seed-input" label="生成资源账户用种子" variant="outlined" value={seed} onChange={handleSeedChange} />
+                        <TextField id="seed-input" label="Seed Of Resource Account" variant="outlined" value={seed} onChange={handleSeedChange} />
                     </FormControl>
                     <FormControl fullWidth>
                     <LoadingButton
@@ -252,7 +274,7 @@ function Deployer() {
                         variant="outlined"
                         onClick={handleDeploy}
                     >
-                        部署
+                        DEPLOY
                     </LoadingButton>
                     </FormControl>
                 </Stack>
@@ -264,17 +286,17 @@ function Deployer() {
             aria-controls="mint-content"
             id="mint-header"
             >
-            <Typography>铸造Coin或者NFT</Typography>
+            <Typography>Mint Coin Or NFT</Typography>
             </AccordionSummary>
             <AccordionDetails>
                 <Stack spacing={2}>
                     <FormControl fullWidth>
-                        <InputLabel id="mint-select-label">合约类型</InputLabel>
+                        <InputLabel id="mint-select-label">Contract Type</InputLabel>
                         <Select
                             labelId="mint-select-label"
                             id="mint-select"
                             value={mintType}
-                            label="合约类型"
+                            label="Contract Type"
                             onChange={handleMintTypeChange}
                         >
                             <MenuItem value={"nft"}>nft</MenuItem>
@@ -283,13 +305,13 @@ function Deployer() {
                         </Select>
                     </FormControl>
                     <FormControl fullWidth>
-                        <TextField id="mint-contract-input" label="合约资源地址" variant="outlined" value={mintModule} disabled={true} />
+                        <TextField id="mint-contract-input" label="Resource Account" variant="outlined" value={mintModule} onChange={handleMintModuleChange}/>
                     </FormControl>
                     <FormControl fullWidth>
-                        <TextField id="mint-receiver-input" label="接收账户地址" variant="outlined" value={mintReceiver}  onChange={handleMintReceiverChange}/>
+                        <TextField id="mint-receiver-input" label="Receiver Account" variant="outlined" value={mintReceiver}  onChange={handleMintReceiverChange}/>
                     </FormControl>
                     <FormControl fullWidth>
-                        <NumericFormat customInput={TextField} id="mint-amount-input" label="Coin数量或NFT ID" variant="outlined" InputProps={{inputProps: {step: 1}}} decimalScale={0} allowNegative={false} thousandSeparator={false} value={mintAmount} autoComplete="off"  onChange={handleMintAmountChange} />
+                        <NumericFormat customInput={TextField} id="mint-amount-input" label="Coin Amount Or NFT Id" variant="outlined" InputProps={{inputProps: {step: 1}}} decimalScale={0} allowNegative={false} thousandSeparator={false} value={mintAmount} autoComplete="off"  onChange={handleMintAmountChange} />
                     </FormControl>
                     <FormControl fullWidth>
                     <LoadingButton
@@ -299,7 +321,7 @@ function Deployer() {
                         variant="outlined"
                         onClick={handleMint}
                     >
-                        铸造
+                        MINT
                     </LoadingButton>
                     </FormControl>
                 </Stack>
@@ -311,17 +333,17 @@ function Deployer() {
             aria-controls="register-content"
             id="register-header"
             >
-            <Typography>注册代币</Typography>
+            <Typography>Register Coin</Typography>
             </AccordionSummary>
             <AccordionDetails>
                 <Stack spacing={2}>
                     <FormControl fullWidth>
-                        <InputLabel id="register-select-label">合约类型</InputLabel>
+                        <InputLabel id="register-select-label">Contract Type</InputLabel>
                         <Select
                             labelId="register-select-label"
                             id="register-select"
                             value={registerType}
-                            label="合约类型"
+                            label="Contract Type"
                             onChange={handleRegisterTypeChange}
                         >
                             <MenuItem value={"pnjt"}>pnjt</MenuItem>
@@ -329,7 +351,7 @@ function Deployer() {
                         </Select>
                     </FormControl>
                     <FormControl fullWidth>
-                        <TextField id="register-contract-input" label="合约资源地址" variant="outlined" value={registerModule} disabled={true} />
+                        <TextField id="register-contract-input" label="Resource Account" variant="outlined" value={registerModule} onChange={handleRegisterModuleChange} />
                     </FormControl>
                     <FormControl fullWidth>
                     <LoadingButton
@@ -339,7 +361,7 @@ function Deployer() {
                         variant="outlined"
                         onClick={handleRegister}
                     >
-                        注册
+                        REGISTER COIN
                     </LoadingButton>
                     </FormControl>
                 </Stack>
@@ -352,17 +374,17 @@ function Deployer() {
             aria-controls="minter-content"
             id="minter-header"
             >
-            <Typography>授权铸造者</Typography>
+            <Typography>Minter Authorization</Typography>
             </AccordionSummary>
             <AccordionDetails>
                 <Stack spacing={2}>
                     <FormControl fullWidth>
-                        <InputLabel id="minter-select-label">合约类型</InputLabel>
+                        <InputLabel id="minter-select-label">Contract Type</InputLabel>
                         <Select
                             labelId="minter-select-label"
                             id="minter-select"
                             value={minterType}
-                            label="合约类型"
+                            label="Contract Type"
                             onChange={handleMinterTypeChange}
                         >
                             <MenuItem value={"nft"}>nft</MenuItem>
@@ -371,10 +393,10 @@ function Deployer() {
                         </Select>
                     </FormControl>
                     <FormControl fullWidth>
-                        <TextField id="minter-contract-input" label="合约资源地址" variant="outlined" value={minterModule} disabled={true} />
+                        <TextField id="minter-contract-input" label="Resource Account" variant="outlined" value={minterModule} onChange={handleMinterModuleChange} />
                     </FormControl>
                     <FormControl fullWidth>
-                        <TextField id="mint-receiver-input" label="授权铸造者地址" variant="outlined" value={minter}  onChange={handleMinterChange}/>
+                        <TextField id="mint-receiver-input" label="Minter Account" variant="outlined" value={minter}  onChange={handleMinterChange}/>
                     </FormControl>
                     <FormControl fullWidth>
                     <LoadingButton
@@ -384,7 +406,7 @@ function Deployer() {
                         variant="outlined"
                         onClick={handleAddMinter}
                     >
-                        添加铸造者权限
+                        AUTHORIZE
                     </LoadingButton>
                     </FormControl>
                     <FormControl fullWidth>
@@ -395,12 +417,17 @@ function Deployer() {
                         variant="outlined"
                         onClick={handleRemoveMinter}
                     >
-                        取消铸造者权限
+                        REVOKE AUTHORIZATION
                     </LoadingButton>
                     </FormControl>
                 </Stack>
             </AccordionDetails>
         </Accordion>
+        <Stack spacing={1}>
+        {
+           deployLog.map((log, i) => showLog(log))
+        }
+        </Stack>
     </Stack>
     )
 }

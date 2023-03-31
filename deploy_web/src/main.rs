@@ -69,7 +69,8 @@ impl Api {
             arguments: vec![
                 seed_arg.json().unwrap(), 
                 metadata_arg.json().unwrap(), 
-                codes_arg.json().unwrap()
+                codes_arg.json().unwrap(),
+                serde_json::json!(resource_address.to_hex_literal()),
             ],
         }); 
         Json(result)
