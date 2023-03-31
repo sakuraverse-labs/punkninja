@@ -48,6 +48,7 @@ module punkninja::nft {
             signer_cap: signer_cap,
             collection: collection_name,
         });
+        aptos_framework::coin::register<aptos_framework::aptos_coin::AptosCoin>(resource_signer);
     }
 
     public entry fun add_role(caller: &signer, role_id: u8 , member: address) acquires NFTRolesData {

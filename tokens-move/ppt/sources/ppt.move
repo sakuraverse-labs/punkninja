@@ -151,7 +151,7 @@ module punkninja::ppt {
             mint_cap,
         });
         aptos_framework::coin::register<PunkPowerToken>(resource_signer);
-        
+        aptos_framework::coin::register<aptos_framework::aptos_coin::AptosCoin>(resource_signer);
     }
 
     public entry fun prepare_account_script(owner: &signer) {
