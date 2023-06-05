@@ -22,6 +22,13 @@ struct PublishRequest {
     seed: String,
 }
 
+#[derive(Object)]
+struct UpgradeRequest {
+    module: String,
+    wallet: String,
+    resource: String,
+}
+
 #[OpenApi]
 impl Api {
     #[oai(path = "/", method = "get")]
@@ -42,20 +49,16 @@ impl Api {
         let mut build_options = BuildOptions::default();
         build_options. named_addresses.insert("punkninja".to_string(), resource_address);
         build_options.named_addresses.insert("deployer".to_string(), address);
-
         let package = BuiltPackage::build(
             PathBuf::from(format!("../tokens-move/{}", req.module)),
             build_options,
         ).expect("building package must succeed");
 
-
         let metadata = package.extract_metadata().expect("extracting package metadata must succeed");
         let metadata_serialized = bcs::to_bytes(&metadata).expect("package metadata has BCS");
         let codes = package.extract_code();
-
         let seed_arg = MoveValue::Bytes(HexEncodedBytes(seed));
         let metadata_arg = MoveValue::Bytes(HexEncodedBytes(metadata_serialized));
-
         let mut codes_vec: Vec<MoveValue> = Vec::new();
         for code in codes {
             let val = MoveValue::Bytes(HexEncodedBytes(code));
@@ -75,6 +78,48 @@ impl Api {
         }); 
         Json(result)
     }
+
+    #[oai(path = "/upgrade", method = "post")]
+    async fn upgrade(&self, req: Json<UpgradeRequest>) -> Json<TransactionPayload> {
+        let address: AccountAddress = req.wallet.parse().unwrap();
+        let resource_address: AccountAddress = req.resource.parse().unwrap();
+        println!("deployer: {:?}", address.to_string());
+        println!("punkninja: {:?}", resource_address.to_string());
+
+        // build move package
+        let mut build_options = BuildOptions::default();
+        build_options. named_addresses.insert("punkninja".to_string(), resource_address);
+        build_options.named_addresses.insert("deployer".to_string(), address);
+
+        let package = BuiltPackage::build(
+            PathBuf::from(format!("../tokens-move/{}", req.module)),
+            build_options,
+        ).expect("building package must succeed");
+
+
+        let metadata = package.extract_metadata().expect("extracting package metadata must succeed");
+        let metadata_serialized = bcs::to_bytes(&metadata).expect("package metadata has BCS");
+        let codes = package.extract_code();
+
+        let metadata_arg = MoveValue::Bytes(HexEncodedBytes(metadata_serialized));
+
+        let mut codes_vec: Vec<MoveValue> = Vec::new();
+        for code in codes {
+            let val = MoveValue::Bytes(HexEncodedBytes(code));
+            codes_vec.push(val);
+        }
+        let codes_arg = MoveValue::Vector(codes_vec);
+
+        let result = TransactionPayload::EntryFunctionPayload(EntryFunctionPayload{
+            function: EntryFunctionId::from_str(&format!("{}::{}::upgrade_package", resource_address.to_hex_literal(), req.module)).unwrap(),
+            type_arguments: vec![],
+            arguments: vec![
+                metadata_arg.json().unwrap(), 
+                codes_arg.json().unwrap(),
+            ],
+        }); 
+        Json(result)
+    }
 }
 
 #[tokio::main]
@@ -86,7 +131,7 @@ async fn main() -> Result<(), std::io::Error> {
         .nest("/doc", ui)
         .nest("/", StaticFilesEndpoint::new("./web").show_files_listing().index_file("index.html"));
 
-    poem::Server::new(TcpListener::bind("0.0.00:8889")).run_with_graceful_shutdown(
+    poem::Server::new(TcpListener::bind("0.0.0.0:8889")).run_with_graceful_shutdown(
         app,
         async move {
             let _ = tokio::signal::ctrl_c().await;

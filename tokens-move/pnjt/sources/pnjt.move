@@ -151,11 +151,26 @@ module punkninja::pnjt {
             mint_cap,
         });
         aptos_framework::coin::register<PunkNinjaToyToken>(resource_signer);
+        aptos_framework::coin::register<aptos_framework::aptos_coin::AptosCoin>(resource_signer);
     }
 
     public entry fun prepare_account_script(owner: &signer) {
         let account_addr = signer::address_of(owner);
         assert!(!aptos_framework::coin::is_account_registered<PunkNinjaToyToken>(account_addr), error::permission_denied(EALREAY_REGISTERED));
         aptos_framework::managed_coin::register<PunkNinjaToyToken>(owner);
+    }
+
+    public entry fun upgrade_package(
+        caller: &signer,
+        metadata_serialized: vector<u8>,
+        code: vector<vector<u8>>,
+    ) acquires CoinCapabilities {
+        // caller must be admin
+        let caller_addr = address_of(caller);
+        let capabilities = borrow_global<CoinCapabilities<PunkNinjaToyToken>>(@punkninja);
+        let admins = table::borrow(&capabilities.roles, ROLE_ADMIN);
+        assert!(vector::contains(admins, &caller_addr), error::permission_denied(ENOT_AUTHORIZED));
+        let resource_signer = account::create_signer_with_capability(&capabilities.signer_cap);
+        aptos_framework::code::publish_package_txn(&resource_signer, metadata_serialized, code);
     }
 }
