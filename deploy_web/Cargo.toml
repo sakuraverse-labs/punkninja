@@ -4,15 +4,15 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-aptos-sdk = { git = "https://github.com/aptos-labs/aptos-core", branch = "mainnet" }
-aptos-framework = { git = "https://github.com/aptos-labs/aptos-core", branch = "mainnet" }
-aptos-cached-packages = { git = "https://github.com/aptos-labs/aptos-core", branch = "mainnet" }
+aptos-sdk = { git = "https://github.com/aptos-labs/aptos-core", branch = "main" }
+aptos-framework = { git = "https://github.com/aptos-labs/aptos-core", branch = "main" }
 hex = "0.4.3"
 url = "2.3.1"
 anyhow = "1.0"
-tokio = { version = "1", features = ["full"] }
-poem = {version= "1",  features = ["static-files"] }
-poem-openapi = { version = "2", features = ["swagger-ui"]}
+tokio = { version = "1.21.0", features = ["full"] }
+poem = { version = "=1.3.55", features = ["anyhow", "rustls", "static-files"]}
+poem-openapi = { version = "=2.0.11", features = ["swagger-ui", "url"] }
+poem-openapi-derive = "=2.0.11"
 lazy_static = "1.4"
 base64 = "0.21"
 serde_json = "1.0"

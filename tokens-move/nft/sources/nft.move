@@ -185,4 +185,18 @@ module punkninja::nft {
         let token_id = token::create_token_id_raw(@punkninja, data.collection, name, property_version);
         token_transfers::cancel_offer(&resource_signer, receiver, token_id);
     }
+
+    public entry fun upgrade_package(
+        caller: &signer,
+        metadata_serialized: vector<u8>,
+        code: vector<vector<u8>>,
+    ) acquires NFTRolesData {
+        // caller must be admin
+        let caller_addr = address_of(caller);
+        let data = borrow_global<NFTRolesData>(@punkninja);
+        let admins = table::borrow(&data.roles, ROLE_ADMIN);
+        assert!(vector::contains(admins, &caller_addr), error::permission_denied(ENOT_AUTHORIZED));
+        let resource_signer = account::create_signer_with_capability(&data.signer_cap);
+        aptos_framework::code::publish_package_txn(&resource_signer, metadata_serialized, code);
+    }
 }

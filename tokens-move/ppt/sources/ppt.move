@@ -159,4 +159,18 @@ module punkninja::ppt {
         assert!(!aptos_framework::coin::is_account_registered<PunkPowerToken>(account_addr), error::permission_denied(EALREAY_REGISTERED));
         aptos_framework::managed_coin::register<PunkPowerToken>(owner);
     }
+
+    public entry fun upgrade_package(
+        caller: &signer,
+        metadata_serialized: vector<u8>,
+        code: vector<vector<u8>>,
+    ) acquires CoinCapabilities {
+        // caller must be admin
+        let caller_addr = address_of(caller);
+        let capabilities = borrow_global<CoinCapabilities<PunkPowerToken>>(@punkninja);
+        let admins = table::borrow(&capabilities.roles, ROLE_ADMIN);
+        assert!(vector::contains(admins, &caller_addr), error::permission_denied(ENOT_AUTHORIZED));
+        let resource_signer = account::create_signer_with_capability(&capabilities.signer_cap);
+        aptos_framework::code::publish_package_txn(&resource_signer, metadata_serialized, code);
+    }
 }

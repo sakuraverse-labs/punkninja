@@ -44,6 +44,7 @@ function Deployer() {
     const [seed, setSeed] = useState("1001");
     const [loading, setLoading] = useState(false);
     const [deployLog, setDeployLog] = useState([]);
+    const [resource, setResource] = useState(""); 
 
     const [mintReceiver, setMintReceiver] = useState("");
     const [mintAmount, setMintAmount] = useState("0");
@@ -64,6 +65,11 @@ function Deployer() {
     const handleSeedChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         setSeed(event.target.value as string);
     };
+
+    const handleResourceChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setResource(event.target.value as string);
+    };
+
     const handleMintReceiverChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         setMintReceiver(event.target.value as string);
     };
@@ -122,6 +128,45 @@ function Deployer() {
                 new HexString(data["arguments"][0]).toUint8Array(),
                 new HexString(data["arguments"][1]).toUint8Array(),
                 data["arguments"][2].map((e: string) => Array.from(new HexString(e).toUint8Array())),
+            ],
+            "function": data["function"],
+            "type": data["type"],
+            "type_arguments": data["type_arguments"],
+        }
+        try{
+            const result = await signAndSubmitTransaction(payload);
+            logs = [...logs, "Deploy success: " + result.hash];
+            setDeployLog(logs);
+        }catch(err) {
+            logs = [...logs, "Deploy failed"];
+            setDeployLog(logs);
+        }
+        setLoading(false);
+    };
+
+    const handleUpgrade = async () => {
+        setLoading(true);
+        let logs = deployLog;
+        logs = [...logs, "Start compile contract code of " + module];
+        setDeployLog(logs);
+        const jsonData = {
+            "module": module,
+            "wallet": account.address,
+            "resource": resource,
+        }
+        const response = await fetch('/api/upgrade', { 
+            method: 'POST', 
+            mode: 'cors', 
+            headers: { "Content-Type": "application/json"},
+            body: JSON.stringify(jsonData) 
+        });
+        const data = await response.json();
+        logs = [...logs, "Start re-deploy contract [" + resource + "]"];
+        setDeployLog(logs);
+        const payload = {
+            "arguments": [
+                new HexString(data["arguments"][0]).toUint8Array(),
+                data["arguments"][1].map((e: string) => Array.from(new HexString(e).toUint8Array()))
             ],
             "function": data["function"],
             "type": data["type"],
@@ -293,6 +338,47 @@ function Deployer() {
                         onClick={handleDeploy}
                     >
                         DEPLOY
+                    </LoadingButton>
+                    </FormControl>
+                </Stack>
+            </AccordionDetails>
+        </Accordion>
+        <Accordion>
+            <AccordionSummary
+            expandIcon={<ExpandMore />}
+            aria-controls="upgrade-content"
+            id="upgrade-header"
+            >
+            <Typography>Upgrade Contract</Typography>
+            </AccordionSummary>
+            <AccordionDetails>
+                <Stack spacing={2}>
+                    <FormControl fullWidth>
+                        <InputLabel id="module-select-label">Contract Type</InputLabel>
+                        <Select
+                            labelId="module-select-label"
+                            id="module-select"
+                            value={module}
+                            label="Contract Type"
+                            onChange={handleModuleChange}
+                        >
+                            <MenuItem value={"nft"}>nft</MenuItem>
+                            <MenuItem value={"pnjt"}>pnjt</MenuItem>
+                            <MenuItem value={"ppt"}>ppt</MenuItem>
+                        </Select>
+                    </FormControl>
+                    <FormControl fullWidth>
+                        <TextField id="address-input" label="Address Of Resource Account" variant="outlined" value={resource} onChange={handleResourceChange}  />
+                    </FormControl>
+                    <FormControl fullWidth>
+                    <LoadingButton
+                        loading={loading}
+                        loadingPosition="start"
+                        startIcon={<Send />}
+                        variant="outlined"
+                        onClick={handleUpgrade}
+                    >
+                        UPGRADE
                     </LoadingButton>
                     </FormControl>
                 </Stack>
